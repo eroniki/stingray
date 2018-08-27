@@ -44,17 +44,25 @@ class frame_grabber(object):
                 if exc.errno != errno.EEXIST:
                     raise
 
-    def read_video(self, fname, show=False):
+        cv2.imwrite(path, frame)
+
+    def read_video(self, fname, camera, test, show=False):
         cap = cv2.VideoCapture(fname)
+        id = 0
+        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('image', 300, 300)
 
         while(cap.isOpened()):
             ret, frame = cap.read()
-            self.save_img(frame, id)
-            if show is True:
-                cv2.imshow('frame', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
+            if ret is True:
+                self.save_img(frame, camera=camera, frame_id=id, test=test)
+                if show is True:
+                    cv2.imshow('image', frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
+            else:
+                break
+            id += 1
         cap.release()
         cv2.destroyAllWindows()
 
