@@ -33,8 +33,16 @@ class frame_grabber(object):
     def check_folder_exists(self, fname):
         pass
 
-    def save_img(self, frame, camera, id, test):
-        pass
+    def save_img(self, frame, camera, frame_id, test):
+        test_name = os.path.basename(test)
+        path = os.path.join("data/frames/", str(camera),
+                            test_name, str(frame_id) + ".jpg")
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(os.path.dirname(path))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
 
     def read_video(self, fname, show=False):
         cap = cv2.VideoCapture(fname)
