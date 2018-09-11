@@ -21,7 +21,7 @@ class vision(object):
         pass
 
 
-class frame_grabber(object):
+class frame_grabber(vision):
     """docstring for frame_grabber."""
 
     def __init__(self):
