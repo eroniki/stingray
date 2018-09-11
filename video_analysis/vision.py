@@ -67,6 +67,13 @@ class frame_grabber(vision):
         cap.release()
         cv2.destroyAllWindows()
 
+    def find_all_imgs(self, search_path, ext=".jpg",
+                      serialize=False, location=None):
+        return self.find_all_videos(search_path=search_path,
+                                    ext=ext,
+                                    serialize=serialize,
+                                    location=location)
+
     def find_all_videos(self, search_path, ext=".MP4",
                         serialize=True, location=None):
 
