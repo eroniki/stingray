@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import json
+import re
 
 
 class vision(object):
@@ -76,7 +77,8 @@ class frame_grabber(vision):
                 if file.endswith(ext):
                     found.append(os.path.join(root, file))
 
-        found.sort()
+        found.sort(key=self.natural_keys)
+
         if serialize:
             return self.serialize(list=found, location=location)
         else:
@@ -96,3 +98,9 @@ class frame_grabber(vision):
         with open(path) as f:
             data = json.load(f)
         return data
+
+    def atoi(self, text):
+        return int(text) if text.isdigit() else text
+
+    def natural_keys(self, text):
+        return [self.atoi(c) for c in re.split('(\d+)', text)]
