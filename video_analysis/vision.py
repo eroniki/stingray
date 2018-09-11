@@ -12,11 +12,17 @@ class vision(object):
         super(vision, self).__init__()
         self.arg = arg
 
-    def hough(self, arg):
-        pass
+    def find_blobs_containing_circle(self, canvas, rect, circles):
+        matches = np.zeros([len(rect), len(circles)], dtype=np.int8)
 
-    def blob_analysis(self, arg):
-        pass
+        for r_id, r in enumerate(rect):
+            for c_id, c in enumerate(circles):
+                contains = self.check_blob_contains_point(r, c[0:2])
+                matches[r_id, c_id] += contains
+                xc, yc, rc = c
+                if contains:
+                    cv2.circle(canvas, (xc, yc), rc, (0, 255, 0), 4)
+        return matches, canvas
 
     def triangulate(self, arg):
         pass
@@ -30,6 +36,16 @@ class vision(object):
                                 tileGridSize=(tile_size, tile_size))
         img_lab[:, :, 0] = clahe.apply(img_lab[:, :, 0])
         return cv2.cvtColor(img_lab, cv2.COLOR_LAB2BGR)
+
+    def check_blob_contains_point(self, bb, p):
+        if p[0] > bb[0] and p[0] < (bb[0] + bb[2]):
+            if p[1] > bb[1] and p[1] < (bb[1] + bb[3]):
+                return True
+            else:
+                return False
+        else:
+            return False
+
 
 class frame_grabber(vision):
     """docstring for frame_grabber."""
