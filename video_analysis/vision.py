@@ -21,6 +21,15 @@ class vision(object):
     def triangulate(self, arg):
         pass
 
+    def resize_img(self, img, f):
+        return cv2.resize(img, (0, 0), fx=f, fy=f)
+
+    def recolor_img(self, img, clip, tile_size=8):
+        img_lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        clahe = cv2.createCLAHE(clipLimit=clip,
+                                tileGridSize=(tile_size, tile_size))
+        img_lab[:, :, 0] = clahe.apply(img_lab[:, :, 0])
+        return cv2.cvtColor(img_lab, cv2.COLOR_LAB2BGR)
 
 class frame_grabber(vision):
     """docstring for frame_grabber."""
@@ -28,11 +37,16 @@ class frame_grabber(vision):
     def __init__(self):
         super(frame_grabber, self).__init__()
 
-    def check_video_exists(self, loc):
+    def check_folder_exists(self, folder):
         pass
 
-    def check_folder_exists(self, fname):
-        pass
+    def check_file_exist(self, path):
+        return os.path.exists(path)
+
+    def preprocess(self, img, scale, clip):
+        img = self.resize_img(img, scale)
+        img = self.recolor_img(img, clip=1.0)
+        return img
 
     def save_img(self, frame, camera, frame_id, test):
         test_name = os.path.basename(test)
@@ -43,7 +57,9 @@ class frame_grabber(vision):
                 os.makedirs(os.path.dirname(path))
             except OSError as exc:  # Guard against race condition
                 if exc.errno != errno.EEXIST:
-                    raise
+                    raise IOError("Couldn't handle the folder situations")
+        if os.path.exists(path):
+            raise IOError("Image was already processed!")
 
         cv2.imwrite(path, frame)
 
@@ -56,7 +72,13 @@ class frame_grabber(vision):
         while(cap.isOpened()):
             ret, frame = cap.read()
             if ret is True:
-                self.save_img(frame, camera=camera, frame_id=id, test=test)
+                try:
+                    frame = self.preprocess(frame, scale=0.5, clip=1.0)
+                    self.save_img(frame, camera=camera, frame_id=id, test=test)
+                except Exception as e:
+                    print e
+                    break
+
                 if show is True:
                     cv2.imshow('image', frame)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
