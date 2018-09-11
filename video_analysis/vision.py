@@ -8,9 +8,67 @@ import re
 class vision(object):
     """docstring for vision."""
 
-    def __init__(self, arg):
+    def __init__(self):
         super(vision, self).__init__()
-        self.arg = arg
+        self.params = cv2.SimpleBlobDetector_Params()
+        self.params.filterByArea = True
+        self.params.minArea = 150
+        self.params.maxArea = 500
+
+        self.params.filterByCircularity = True
+        self.params.minCircularity = 0.1
+
+        self.params.minThreshold = 60
+        self.params.maxThreshold = 175
+
+        self.params.filterByColor = False
+        self.params.filterByConvexity = False
+        self.params.filterByInertia = False
+
+        self.params.thresholdStep = 20
+        self.detector = cv2.SimpleBlobDetector_create(self.params)
+
+    def load_img(self, path):
+        return cv2.imread(path)
+
+    def hough(self, img):
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        c = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,
+                             param1=250, param2=10,
+                             dp=2,
+                             minRadius=10,
+                             maxRadius=15,
+                             minDist=30)
+        if c is None:
+            raise ValueError("No circles found, change Hough params")
+        else:
+            return c[0]
+
+    def blob_analysis(self, img):
+        keypoints = self.detector.detect(img)
+        im_with_keypoints = cv2.drawKeypoints(img, keypoints,
+                                              np.array([]), (0, 0, 255),
+                                              cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        # cv2.imshow("Keypoints", im_with_keypoints)
+        # cv2.waitKey(0)
+        return keypoints, im_with_keypoints
+
+    def get_rois_from_blobs(self, kps):
+        rect = np.zeros([len(kps), 4], dtype=np.float64)
+        for k_id, kp in enumerate(kps):
+            r = kp.size
+            min_bound = (np.asarray(kp.pt) - 1.1 * r).astype(np.int)
+            max_bound = (np.asarray(kp.pt) + 1.1 * r).astype(np.int)
+            min_bound = np.clip(min_bound, 0, None)
+
+            h, w = max_bound - min_bound
+            # TODO: Implement this
+            # max_bound = np.clip(max_bound, None,)
+            rect[k_id, :] = np.array([kp.pt[0] - w / 2,
+                                      kp.pt[1] - h / 2,
+                                      w, h])
+
+        return rect
 
     def find_blobs_containing_circle(self, canvas, rect, circles):
         matches = np.zeros([len(rect), len(circles)], dtype=np.int8)
