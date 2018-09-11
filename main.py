@@ -1,9 +1,9 @@
 from video_analysis.vision import *
 import os
+import matplotlib.pyplot as plt
 
 
-def main():
-
+def prep():
     fg = frame_grabber()
 
     cameras = ["data/raw_video/1/",
