@@ -27,14 +27,40 @@ class vision(object):
 
         self.params.thresholdStep = 20
         self.detector = cv2.SimpleBlobDetector_create(self.params)
+        self.bf = cv2.BFMatcher(cv2.NORM_L2, True)
+
+        self.K1 = np.array([[2327.52, 0, 0, 1072.08],
+                            [0, 2414.78, 0, 339.277],
+                            [0, 0, 0, 1.0]])
+
+        self.T1 = np.array([[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 0, 0, 1]])
+
+        self.K2 = np.array([[2377.57, 0, 0, 700.107],
+                            [0, 2377.47, 0, 212.193],
+                            [0, 0, 0, 1.0]])
+
+        self.T2 = np.array([[0.937291, 0.010731, 0.348384, -690.611],
+                            [-0.018734, 0.999632, 0.019611, 5.14431],
+                            [-0.348045, -0.0249078, 0.937147, -21.9169],
+                            [0, 0, 0, 1]])
+        #
+        # self.P1 = K1.dot(T1)
+        # self.P2 = K2.dot(T2)
 
     def load_img(self, path):
         return cv2.imread(path)
 
+    def stereo_correspondence(self, p1, p2):
+        matches = self.bf.match(p1, p2)
+        return matches
+
     def hough(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         c = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,
-                             param1=250, param2=10,
+                             param1=300, param2=10,
                              dp=2,
                              minRadius=10,
                              maxRadius=15,
@@ -82,8 +108,10 @@ class vision(object):
                     cv2.circle(canvas, (xc, yc), rc, (0, 255, 0), 4)
         return matches, canvas
 
-    def triangulate(self, arg):
-        pass
+    # def triangulate(self, p1, p2):
+    #     X = cv2.triangulatePoints(self.P1, self.P2, p1, p2)
+    #     X /= X[3]
+    #     return X
 
     def resize_img(self, img, f):
         return cv2.resize(img, (0, 0), fx=f, fy=f)
@@ -113,6 +141,32 @@ class frame_grabber(vision):
 
     def check_folder_exists(self, folder):
         pass
+
+    def mname(self, arg):
+        pass
+
+    def analyze_roi(self, roi):
+        '''Blob Analysis'''
+        kps, canvas_blobs = self.blob_analysis(roi)
+
+        canvas_circles = roi.copy()
+
+        rect = self.get_rois_from_blobs(kps)
+        '''Circle detection'''
+        try:
+            circles = self.hough(roi)
+        except ValueError:
+            circles = None
+
+        if circles is not None:
+            for i in range(len(circles)):
+                x, y, r = circles[i]
+                cv2.circle(canvas_circles, (x, y), r, (0, 255, 0), 4)
+
+            matches, canvas_fused = self.find_blobs_containing_circle(
+                canvas_blobs, rect, circles)
+
+        return matches, circles, kps, canvas_circles, canvas_blobs, canvas_fused
 
     def check_file_exist(self, path):
         return os.path.exists(path)

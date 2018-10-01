@@ -29,49 +29,88 @@ def prep():
             fg.read_video(video_loc, c_id, test=video, show=False)
 
 
-def main():
+def main_new():
     fg = frame_grabber()
     tests = ["S5A20.MP4", "S10A50.MP4", "S20A60.MP4"]
 
     cameras_ = [0, 1]
-
+    img_path_list_for_all_test = list()
     for t_id, test in enumerate(tests):
+        img_path_list = list()
         for c_id, c in enumerate(cameras_):
             print "test id:", t_id, test, "camera_id:", c_id, c
             path = os.path.join('data/frames/', str(c), test + "/")
-            img_path_list = fg.find_all_imgs(search_path=path, serialize=False)
-            # print img_path_list
-            for i_id, img_path in enumerate(img_path_list):
-                img = fg.load_img(img_path)
-                img = img[160:380, 90:870, :]
+            img_path_list_ = fg.find_all_imgs(search_path=path,
+                                              serialize=False)
 
-                kps, img2 = fg.blob_analysis(img)
-                canvas = np.copy(img2)
-                canvas2 = img.copy()
+            img_path_list.append(img_path_list_)
+        img_path_list_for_all_test.append(img_path_list)
 
-                rect = fg.get_rois_from_blobs(kps)
+    test_id = 0
 
-                try:
-                    circles = fg.hough(img)
-                    # circles = circles[0]
-                except ValueError:
-                    circles = None
+    img_path_list = img_path_list_for_all_test[test_id]
 
-                if circles is not None:
-                    for i in range(len(circles)):
-                        x, y, r = circles[i]
-                        cv2.circle(canvas, (x, y), r, (0, 255, 0), 4)
-                    matches, canvas = fg.find_blobs_containing_circle(canvas2,
-                                                                      rect,
-                                                                      circles)
+    n_file = len(img_path_list[0])
+    n_c = len(cameras_)
+    h = 540
+    w = 960
+    points = np.zeros((n_file, 26, n_c))
+    F = np.array([
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]])
+    points_all = list()
+    for f_id in range(n_file):
+        print f_id,
+        montage = np.zeros((h, w * n_c, 3), dtype=np.uint8)
+        matched = np.zeros((26, n_c))
 
-                cv2.imshow("Keypoints Filtered", canvas2)
-                cv2.imshow("Keypoints", canvas)
-                k = cv2.waitKey(10)
-                if k == 27:
-                    break
-                    cv2.destroyAllWindows()
+        points_all_cams = list()
+        for c_id, c in enumerate(cameras_):
+            print img_path_list[c_id][f_id],
+            img = fg.load_img(img_path_list[c_id][f_id])
+
+            montage[:, c_id * w: (c_id + 1) * w, :] = img
+            roi = img[160: 380, 90: 870, :]
+            matches, circles, kps, \
+                canvas_circles, canvas_blobs, canvas_fused = fg.analyze_roi(
+                    roi)
+
+            points = list()
+            for b_id, row in enumerate(matches):
+                if (np.any(row)):
+                    idx = np.where(row == 1)[0]
+                    for candidate in idx:
+                        x = (circles[candidate, 0] + (c_id)
+                             * w + 90).astype(np.int16)
+                        y = (circles[candidate, 1] + 160).astype(np.int16)
+                        r = (circles[candidate, 2]).astype(np.int16)
+                        p = np.array([circles[candidate, 0].astype(np.int16),
+                                      circles[candidate, 1].astype(np.int16),
+                                      1])
+                        points.append(p)
+                        cv2.circle(montage, (x, y), r, (0, 255, 0), 4)
+            print len(points),
+            points_all_cams.append(points),
+        print
+        points_all.append(points_all_cams)
+        print len(points_all_cams)
+
+        cv2.imshow("Keypoints Filtered", montage)
+        k = cv2.waitKey(10)
+        if k == 27:
+            break
+            cv2.destroyAllWindows()
+
+    print len(points_all),
+    qq = np.asarray(points_all, dtype=object)
+    print qq.shape, len(qq[0, 0])
+    ffname = tests[test_id] + str(cameras_[0]) + \
+        "_" + str(cameras_[1]) + ".npy"
+    np.save(ffname, qq)
+
+    # print len(points_all), len(points_all[0]), len(points_all[1])
 
 
 if __name__ == "__main__":
-    main()
+    main_new()
