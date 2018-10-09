@@ -203,18 +203,21 @@ class frame_grabber(vision):
 
         cv2.imwrite(path, frame)
 
-    def read_video(self, fname, camera, test, show=False):
+    def read_video(self, fname, camera, test, K, scale, clip, dist, show=True):
         cap = cv2.VideoCapture(fname)
         id = 0
-        cv2.namedWindow('image', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('image', 300, 300)
+        if show:
+            cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('image', 300, 300)
 
         while(cap.isOpened()):
             ret, frame = cap.read()
             if ret is True:
                 try:
-                    frame = self.preprocess(frame, scale=0.5, clip=1.0)
-                    self.save_img(frame, camera=camera, frame_id=id, test=test)
+                    frame = self.preprocess(frame, scale=scale, clip=clip,
+                                            K=K, dist=dist, undistort=True)
+                    self.save_img(frame, camera=camera,
+                                  frame_id=id, test=test)
                 except Exception as e:
                     print e
                     break
