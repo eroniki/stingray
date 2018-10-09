@@ -183,9 +183,11 @@ class frame_grabber(vision):
     def check_file_exist(self, path):
         return os.path.exists(path)
 
-    def preprocess(self, img, scale, clip):
+    def preprocess(self, img, scale, clip, K, dist, undistort):
         img = self.resize_img(img, scale)
-        img = self.recolor_img(img, clip=1.0)
+        img = self.recolor_img(img, clip=clip)
+        if undistort:
+            img = self.undistort_img(img, K=K, dist=dist)
         return img
 
     def save_img(self, frame, camera, frame_id, test):
