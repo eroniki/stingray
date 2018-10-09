@@ -123,6 +123,18 @@ class vision(object):
         img_lab[:, :, 0] = clahe.apply(img_lab[:, :, 0])
         return cv2.cvtColor(img_lab, cv2.COLOR_LAB2BGR)
 
+    def undistort_img(self, img, K, dist):
+        h, w = img.shape[0:2]
+        map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, dist,
+                                                         np.eye(3),
+                                                         K, (w, h),
+                                                         cv2.CV_16SC2)
+        img = cv2.remap(img, map1, map2,
+                        interpolation=cv2.INTER_LINEAR,
+                        borderMode=cv2.BORDER_CONSTANT)
+
+        return img
+
     def check_blob_contains_point(self, bb, p):
         if p[0] > bb[0] and p[0] < (bb[0] + bb[2]):
             if p[1] > bb[1] and p[1] < (bb[1] + bb[3]):
