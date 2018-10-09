@@ -1,0 +1,74 @@
+{
+	"cameras": ["0", "1"],
+	"frame_location": "data/frames",
+	"output_folder": "output/",
+    "raw_video": "data/raw_video",
+	"tests": {
+		"05": [20, 30, 50, 60],
+		"10": [10, 20, 30, 40, 50, 60],
+		"15": [10, 20, 30, 40, 50, 60],
+		"20": [10, 20, 40, 50, 60]
+	},
+	"intrinsics": {
+		"0": {
+			"fx": 2322.3,
+			"fy": 2407.7,
+			"cx": 1041.7,
+			"cy": 336.86,
+			"skew": 0
+		},
+		"1": {
+			"fx": 2370,
+			"fy": 2371,
+			"cx": 572.46,
+			"cy": 301.85,
+			"skew": 0
+		}
+	},
+	"distortion": {
+		"0": [0, 0.6065, -15.8548, 156.7909],
+		"1": [0, 0.073373, -76.79, 3764.5]
+	},
+	"preprocess": {
+		"recolor": true,
+		"recolor_threshold": 1.0,
+		"resize": true,
+		"resize_scale": 0.5
+	},
+	"hough": {
+		"param1": 300,
+		"param2": 10,
+		"mindist": 30,
+		"dp": 2,
+		"minradius": 10,
+		"maxradius": 15
+	},
+	"blob_analysis": {
+		"area": {
+			"filter": true,
+			"threshold": [150, 500]
+		},
+		"circularity": {
+			"filter": true,
+			"threshold": [0.1]
+		},
+		"grayscale": {
+			"filter": true,
+			"threshold": [60, 175],
+			"step": 20
+		},
+		"color": {
+			"filter": false,
+			"threshold": [null, null]
+		},
+		"convexity": {
+			"filter": false,
+			"threshold": [null, null]
+		},
+		"inertia": {
+			"filter": false,
+			"threshold": [null, null]
+		}
+
+	}
+}
